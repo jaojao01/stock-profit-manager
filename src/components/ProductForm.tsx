@@ -4,12 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ChevronsUpDown, Check } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
-import { ProductRecord } from "@/lib/supabase";
 
 interface Product {
   id: number;
@@ -30,13 +24,6 @@ export function ProductForm({ onSubmit, editingProduct, onCancelEdit }: ProductF
   const [cost, setCost] = useState("");
   const [price, setPrice] = useState("");
   const [quantitySold, setQuantitySold] = useState("");
-  const [open, setOpen] = useState(false);
-  const [products, setProducts] = useState<ProductRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
 
   useEffect(() => {
     if (editingProduct) {
@@ -46,29 +33,6 @@ export function ProductForm({ onSubmit, editingProduct, onCancelEdit }: ProductF
       setQuantitySold(editingProduct.quantitySold.toString());
     }
   }, [editingProduct]);
-
-  const fetchProducts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('name');
-      
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      toast.error("Erro ao carregar produtos");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleProductSelect = (productRecord: ProductRecord) => {
-    setName(productRecord.name);
-    setCost(productRecord.cost.toString());
-    setOpen(false);
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,42 +61,12 @@ export function ProductForm({ onSubmit, editingProduct, onCancelEdit }: ProductF
     <form onSubmit={handleSubmit} className="space-y-4 p-6 glassmorphism rounded-lg">
       <div className="space-y-2">
         <Label htmlFor="name">Nome do Produto</Label>
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={open}
-              className="w-full justify-between"
-            >
-              {name || "Selecione um produto..."}
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-full p-0">
-            <Command>
-              <CommandInput placeholder="Procurar produto..." />
-              <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
-              <CommandGroup className="max-h-60 overflow-auto">
-                {products.map((product) => (
-                  <CommandItem
-                    key={product.id}
-                    onSelect={() => handleProductSelect(product)}
-                    className="cursor-pointer"
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        name === product.name ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {product.name}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </Command>
-          </PopoverContent>
-        </Popover>
+        <Input
+          id="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Digite o nome do produto"
+        />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -146,7 +80,6 @@ export function ProductForm({ onSubmit, editingProduct, onCancelEdit }: ProductF
             value={cost}
             onChange={(e) => setCost(e.target.value)}
             placeholder="0,00"
-            readOnly={!!name}
           />
         </div>
         
