@@ -1,29 +1,43 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-interface ProductFormProps {
-  onSubmit: (product: {
-    name: string;
-    cost: number;
-    price: number;
-    stock: number;
-  }) => void;
+interface Product {
+  id: number;
+  name: string;
+  cost: number;
+  price: number;
+  quantitySold: number;
 }
 
-export function ProductForm({ onSubmit }: ProductFormProps) {
+interface ProductFormProps {
+  onSubmit: (product: Omit<Product, "id">) => void;
+  editingProduct?: Product;
+  onCancelEdit?: () => void;
+}
+
+export function ProductForm({ onSubmit, editingProduct, onCancelEdit }: ProductFormProps) {
   const [name, setName] = useState("");
   const [cost, setCost] = useState("");
   const [price, setPrice] = useState("");
-  const [stock, setStock] = useState("");
+  const [quantitySold, setQuantitySold] = useState("");
+
+  useEffect(() => {
+    if (editingProduct) {
+      setName(editingProduct.name);
+      setCost(editingProduct.cost.toString());
+      setPrice(editingProduct.price.toString());
+      setQuantitySold(editingProduct.quantitySold.toString());
+    }
+  }, [editingProduct]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !cost || !price || !stock) {
+    if (!name || !cost || !price || !quantitySold) {
       toast.error("Por favor, preencha todos os campos");
       return;
     }
@@ -32,15 +46,15 @@ export function ProductForm({ onSubmit }: ProductFormProps) {
       name,
       cost: Number(cost),
       price: Number(price),
-      stock: Number(stock),
+      quantitySold: Number(quantitySold),
     });
 
     setName("");
     setCost("");
     setPrice("");
-    setStock("");
+    setQuantitySold("");
     
-    toast.success("Produto adicionado com sucesso!");
+    toast.success(editingProduct ? "Produto atualizado com sucesso!" : "Produto adicionado com sucesso!");
   };
 
   return (
@@ -83,21 +97,28 @@ export function ProductForm({ onSubmit }: ProductFormProps) {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="stock">Quantidade em Estoque</Label>
+          <Label htmlFor="quantitySold">Quantidade Vendida</Label>
           <Input
-            id="stock"
+            id="quantitySold"
             type="number"
             min="0"
-            value={stock}
-            onChange={(e) => setStock(e.target.value)}
+            value={quantitySold}
+            onChange={(e) => setQuantitySold(e.target.value)}
             placeholder="0"
           />
         </div>
       </div>
       
-      <Button type="submit" className="w-full">
-        Adicionar Produto
-      </Button>
+      <div className="flex gap-2 justify-end">
+        {editingProduct && (
+          <Button type="button" variant="outline" onClick={onCancelEdit}>
+            Cancelar
+          </Button>
+        )}
+        <Button type="submit">
+          {editingProduct ? "Atualizar Produto" : "Adicionar Produto"}
+        </Button>
+      </div>
     </form>
   );
 }

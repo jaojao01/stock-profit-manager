@@ -9,22 +9,40 @@ interface Product {
   name: string;
   cost: number;
   price: number;
-  stock: number;
+  quantitySold: number;
 }
 
 const Index = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [editingProduct, setEditingProduct] = useState<Product | undefined>();
 
   const handleAddProduct = (productData: Omit<Product, "id">) => {
-    const newProduct = {
-      ...productData,
-      id: Date.now(),
-    };
-    setProducts([...products, newProduct]);
+    if (editingProduct) {
+      setProducts(products.map(product => 
+        product.id === editingProduct.id 
+          ? { ...productData, id: editingProduct.id }
+          : product
+      ));
+      setEditingProduct(undefined);
+    } else {
+      const newProduct = {
+        ...productData,
+        id: Date.now(),
+      };
+      setProducts([...products, newProduct]);
+    }
   };
 
-  const totalInvestment = products.reduce((sum, product) => sum + (product.cost * product.stock), 0);
-  const totalRevenue = products.reduce((sum, product) => sum + (product.price * product.stock), 0);
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingProduct(undefined);
+  };
+
+  const totalInvestment = products.reduce((sum, product) => sum + (product.cost * product.quantitySold), 0);
+  const totalRevenue = products.reduce((sum, product) => sum + (product.price * product.quantitySold), 0);
   const totalProfit = totalRevenue - totalInvestment;
 
   return (
@@ -43,13 +61,22 @@ const Index = () => {
       />
 
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold tracking-tight">Adicionar Produto</h2>
-        <ProductForm onSubmit={handleAddProduct} />
+        <h2 className="text-2xl font-semibold tracking-tight">
+          {editingProduct ? "Editar Produto" : "Adicionar Produto"}
+        </h2>
+        <ProductForm 
+          onSubmit={handleAddProduct} 
+          editingProduct={editingProduct}
+          onCancelEdit={handleCancelEdit}
+        />
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold tracking-tight">Produtos em Estoque</h2>
-        <ProductsTable products={products} />
+        <h2 className="text-2xl font-semibold tracking-tight">Produtos Cadastrados</h2>
+        <ProductsTable 
+          products={products} 
+          onEditProduct={handleEditProduct}
+        />
       </div>
     </div>
   );
